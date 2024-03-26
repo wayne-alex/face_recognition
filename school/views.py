@@ -2,7 +2,6 @@ import base64
 import io
 import json
 import math
-import os
 import random
 
 import cv2
@@ -29,15 +28,13 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.platypus import Image as Img
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 from .forms import SignUpForm
 from .models import Account, Signed
 from .models import Enrollment
 from .models import User, Class, ClassCount, Attendance
-
-os.add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
 
 
 def home(request):
