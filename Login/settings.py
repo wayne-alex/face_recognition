@@ -13,8 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-b=2p)8!xoy2$=nu$sskm$fkc1%(ob2@l#_w0jpwb0dun3y*l1b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-FACE_RECOGNITION_URL = 'http://127.0.0.1:5000/verify'
+DEBUG = True
+FACE_RECOGNITION_URL = 'http://20.2.233.13:5001/verify'
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = ['https://679f-102-212-236-155.ngrok-free.app']
