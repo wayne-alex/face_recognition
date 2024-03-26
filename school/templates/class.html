@@ -1,0 +1,115 @@
+{% extends 'base2.html' %}
+{% load static %}
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+{% block content %}
+<!-- partial -->
+<div class="main-panel">
+    <div class="container">
+        <br/>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+
+        </div>
+
+        <div class="row">
+            <p class="h3">Classes</p>
+            <div style="height:100%; width:100%;  justify-content:space-evenly; padding: 20px 0;">
+            </div>
+
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Classes Created</h4>
+                        <a href="{% url 'new_class' %}" class="btn btn-success btn-sm">Add New Class</a>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Unit Name</th>
+                                    <th> Status</th>
+                                    <th> No of students</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                {% if classes_and_enrollment %}
+                                {% for class_obj, enrollment_count in classes_and_enrollment %}
+                                <tbody>
+                                <tr>
+
+                                    <td>{{ class_obj.name }}</td>
+                                    <td>{{ class_obj.code }}</td>
+                                    <td>{{ enrollment_count }}</td>
+                                    <td><a href="#" onclick="getTeacherLocation('{{ class_obj.id }}')"
+                                           class="btn btn-info btn-sm" id="takeAttendanceButton">Take Attendance</a>
+                                        <a href="{% url 'delete_class' class_obj.id  %}"
+                                           class="btn btn-danger btn-sm">delete
+                                            class</a>
+                                    </td>
+                                </tr>
+
+                                </tbody>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% else %}
+                        <h3>You have not created any Class!</h3>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <footer class="footer">
+        <div class="container-fluid d-flex justify-content-between">
+            <span class="text-muted d-block text-center text-sm-start d-sm-inline-block">Copyright © G4.com 2024</span>
+        </div>
+    </footer>
+</div>
+
+<script>
+    function getTeacherLocation(teacherId) {
+        // Check if geolocation is supported by the browser
+        if (navigator.geolocation) {
+            // Get the current position of the user
+            navigator.geolocation.getCurrentPosition(function (position) {
+                // Extract latitude and longitude from the position object
+                var latitude = position.coords.latitude;
+                var longitude = position.coords.longitude;
+
+                // Construct the URL directly
+                var url = "/take_attendance/" + teacherId + "/" + latitude + "/" + longitude + "/";
+
+                // Navigate to the constructed URL
+                window.location.href = url;
+
+            }, function (error) {
+                // Handle errors
+                console.error('Error getting geolocation:', error);
+            });
+        } else {
+            // Geolocation is not supported by the browser
+            alert("Geolocation is not supported by your browser.");
+        }
+    }
+
+</script>
+
+
+{% endblock %}

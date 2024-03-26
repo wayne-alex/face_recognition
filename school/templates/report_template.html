@@ -1,0 +1,57 @@
+{% load static %}
+<html>
+<head>
+    <title>Machakos University - Report Generation for Robotics</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body style="background-color: #f0f0f0; font-family: Arial, sans-serif;">
+<img src="{% static 'assets/img/Logo.png' %}" alt="Machakos University"
+     style="display: block; margin: 0 auto; height: 50px; width: 50px;"/>
+<h1 style="text-align: center;">Report Generation for {{ class_details.name }}</h1>
+<div style="width: 100%; margin: 5px; display: flex; justify-content: space-around;">
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">person</i> Student First Name</h2>
+        <p>{{ student_details.first_name }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">person_outline</i> Second Name</h2>
+        <p>{{ student_details.last_name }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">assignment_ind</i> Admission Number</h2>
+        <p>{{ student_details.admission_number }}</p>
+    </div>
+</div>
+<div style="width: 100%; margin: 5px; display: flex; justify-content: space-around;">
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">school</i> Class Name</h2>
+        <p>{{ class_details.name }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">library_books</i> Class Code</h2>
+        <p>{{ class_details.code }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2><i class="material-icons">person</i> Lecturer Name</h2>
+        <p>{{ class_details.lecturer_name }}</p>
+    </div>
+</div>
+<div style="width: 100%; margin: 5px; display: flex; justify-content: space-around;">
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2 style="color: green;"><i class="material-icons" style="color: green;">check_circle</i> Total classes Taught
+        </h2>
+        <p style="color: green;">{{ attendance_details.total_taught }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2 style="color: blue;"><i class="material-icons" style="color: blue;">check_circle</i> Total classes Attended
+        </h2>
+        <p style="color: blue;">{{ attendance_details.total_attended }}</p>
+    </div>
+    <div style="width: 30%; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 5px #ccc; padding: 10px;">
+        <h2 style="color: red;"><i class="material-icons" style="color: red;">check_circle</i> Percentage Attended Class
+        </h2>
+        <p style="color: red;">{{ attendance_details.attendance_percentage }}</p>
+    </div>
+</div>
+</body>
+</html>

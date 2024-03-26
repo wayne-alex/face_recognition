@@ -1,0 +1,189 @@
+{% extends 'base2.html' %}
+{% block content %}
+
+<style>
+    .main-panel {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    #countdown {
+        font-size: 3rem;
+    }
+
+    #info {
+        font-size: 1rem;
+    }
+
+    #no-of-students {
+        font-size: 1.5rem;
+    }
+</style>
+
+<div class="main-panel">
+    <div class="container">
+        <br/>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white me-2">
+                    <i class="mdi mdi-database-plus"></i>
+                </span> Take Attendance for Class: {{ classroom.name }}
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span></span>Overview <i
+                            class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Attendance Details</h4>
+
+                    <p class="card-text">Unit Name: <b>{{ classroom.unit_name }}</b></p>
+                    <p class="card-text">Unit Code: <b>{{ classroom.unit_code }}</b></p>
+                    <p class="card-text">Lecturer:<b> {{ classroom.teacher.user.last_name}}</b> {{
+                        classroom.teacher.user.first_name}}</p>
+                    <a href="{% url 'end_class' classroom.id %}" id="end_class" class="btn btn-danger btn-sm">Stop
+                        Attendance</a>
+
+                    <!-- Countdown Timer -->
+                    <div class="card  border-primary mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Countdown</h5>
+                            <div id="countdown" class="text-center">05:00<span style="font-size: 1.5rem;">00</span>
+                            </div>
+                            <div id="info" class="text-center"><span
+                                    class="material-symbols-outlined">warning</span></span> When the timer runs out,
+                                no more
+                                attendance will be accepted.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <p class="card-text">Student Attendance: <b>00</b>/{{ count }}</p>
+                        <table class="table" style="height: 300px;">
+                            <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th> Time</th>
+                                <th>Remarks</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function updateAttendanceTable() {
+        $.ajax({
+            url: '{% url "signed" classroom.id %}',
+            type: 'GET',
+            success: function (response) {
+                // Clear the table body
+                $('#attendanceTable tbody').empty();
+
+                // Parse the JSON response
+                var data = JSON.parse(response);
+
+                // Iterate over the data and populate the table
+                data.forEach(function (item) {
+                    var row = '<tr>';
+                    row += '<td>' + item.fields.student + '</td>';
+                    row += '<td>' + item.fields.time + '</td>';
+                    row += '<td>' + item.fields.remarks + '</td>';
+                    row += '</tr>';
+                    $('#attendanceTable tbody').append(row);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+
+    // Call the updateAttendanceTable function every 2 seconds
+    setInterval(updateAttendanceTable, 2000);
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Countdown Timer
+        var countdown = document.getElementById('countdown');
+        var countdownValue = 5 * 60; // 5 minutes in seconds
+        var timer = setInterval(updateCountdown, 1000);
+
+        function updateCountdown() {
+            // Decrement countdownValue before updating the display
+            if (countdownValue > 0) {
+                countdownValue--;
+            }
+
+            var minutes = Math.floor(countdownValue / 60);
+            var seconds = countdownValue % 60;
+
+            // Change color based on time remaining
+            if (countdownValue > 120) {
+                countdown.classList.remove('text-warning');
+                countdown.classList.remove('text-danger');
+                countdown.classList.add('text-success');
+            } else if (countdownValue <= 120 && countdownValue > 60) {
+                countdown.classList.remove('text-success');
+                countdown.classList.remove('text-danger');
+                countdown.classList.add('text-warning');
+            } else {
+                countdown.classList.remove('text-success');
+                countdown.classList.remove('text-warning');
+                countdown.classList.add('text-danger');
+            }
+
+            // Format minutes and seconds
+            var formattedMinutes = String(minutes).padStart(2, '0');
+            var formattedSeconds = String(seconds).padStart(2, '0');
+
+            countdown.textContent = formattedMinutes + ':' + formattedSeconds;
+
+            if (countdownValue <= 0) {
+                clearInterval(timer);
+                const endclass = document.getElementById("end_class");
+                endclass.click();
+            }
+        }
+    });
+</script>
+
+{% endblock %}
+
+

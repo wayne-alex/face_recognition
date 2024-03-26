@@ -1,0 +1,92 @@
+{% extends 'base2.html' %}
+{% load static %}
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+{% block content %}
+<!-- partial -->
+<div class="main-panel">
+    <div class="container">
+        <br/>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{% static 'Login/stylesheets/assets/images/dashboard/circle.svg' %}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Number of classes <i
+                                class="mdi mdi-coin mdi-24px float-right"></i>
+                        </h4>
+                        <h2 class="mb-5"> {{ created_class_count }} </h2>
+                        <h6 class="card-text">Classes created</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-info card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{% static 'Login/stylesheets/assets/images/dashboard/circle.svg' %}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Enrolled Students <i
+                                class="mdi mdi-account-multiple-plus mdi-24px float-right"></i>
+                        </h4>
+                        <h2 class="mb-5"> {{ enrolled_student_count  }} </h2>
+                        <h6 class="card-text">Total number of enrolled students</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-success card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{% static 'Login/stylesheets/assets/images/dashboard/circle.svg' %}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Attendance taken <i
+                                class="mdi mdi-eye mdi-24px float-right"></i>
+                        </h4>
+                        <h2 class="mb-5">  {{ attendance_taken_count }} </h2>
+                        <h6 class="card-text">Total number of attendance taken</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 stretch-card grid-margin">
+                <div class="card bg-gradient-primary card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{% static 'Login/stylesheets/assets/images/dashboard/circle.svg' %}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Percentage attendance <i
+                                class="mdi mdi-star-circle mdi-24px float-right"></i>
+                        </h4>
+                        <h2 class="mb-5"> {{ percentage_attendance }}% </h2>
+                        <h6 class="card-text">Percentage number of student attendance to total<</h6>
+                    </div>
+                </div>
+            </div>
+
+
+            <footer class="footer">
+                <div class="container-fluid d-flex justify-content-between">
+                    <span class="text-muted d-block text-center text-sm-start d-sm-inline-block">Copyright © G4.com 2024</span>
+                </div>
+            </footer>
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock %}

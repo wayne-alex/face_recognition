@@ -1,0 +1,78 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="main-panel">
+    <div class="container">
+        <br/>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white me-2">
+                    <i class="mdi mdi-database-plus"></i>
+                </span> New Class
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span></span>Overview <i
+                            class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Add new Class</h4>
+                    <!-- Your existing HTML code... -->
+
+                    <form method="post" action="{% url 'new_class' %}">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Code</label>
+                            <input type="text" class="form-control" id="code" name="code" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="teacher" class="form-label">Lecturer</label>
+                            <input type="text" class="form-control" id="teacher" name="teacher" required value="{{ teacher.user.username }}" readonly>
+                        </div>
+
+
+                        <button type="submit" class="btn btn-info">Add Class</button>
+                    </form>
+
+                    <!-- Your existing HTML code... -->
+
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container-fluid d-flex justify-content-between">
+                <span class="text-muted d-block text-center text-sm-start d-sm-inline-block">Copyright © G4.com 2024</span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+{% endblock %}

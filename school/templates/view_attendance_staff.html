@@ -1,0 +1,147 @@
+{% extends 'base2.html' %}
+{% load static %}
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+{% block content %}
+<!-- partial -->
+<div class="main-panel">
+    <div class="container">
+        <br/>
+
+        {% if messages %}
+        {%for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+            <script>
+                // Parse the JSON data
+                const class_data = JSON.parse('{{ class_data_json|safe }}');
+
+                // Generate the bar chart
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('attendanceChart').getContext('2d');
+                    const myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: class_data.map(class_entry => class_entry.class_name),
+                            datasets: [{
+                                label: 'Total Classes Taught',
+                                data: class_data.map(class_entry => class_entry.total_classes_taught),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)', // Blue color with transparency
+                                borderColor: 'rgba(54, 162, 235, 1)', // Blue color for borders
+                                borderWidth: 1, // Border width
+                            },
+                                {
+                                    label: 'Attendance',
+                                    data: class_data.map(class_entry => class_entry.attendance_counts),
+                                    backgroundColor: 'rgba(75,192,116,0.5)', // Green color with transparency
+                                    borderColor: 'rgba(75, 192, 192, 1)', // Green color for borders
+                                    borderWidth: 1 // Border width
+                                }
+                            ]
+                        },
+                        options: {
+                            indexAxis: 'y', // Display the bars horizontally
+                            scales: {
+                                x: {
+                                    beginAtZero: true, // Start the x-axis at zero
+                                    suggestedMin: 0 // Ensure that the x-axis starts at zero
+                                },
+                                y: {
+                                    grid: {
+                                        display: false // Hide the grid lines on the y-axis
+                                    }
+                                }
+                            },
+
+                        }
+                    });
+                });
+            </script>
+
+            <canvas id="attendanceChart" width="100%" height="40"></canvas>
+        </div>
+
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Generate Report</h4>
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <label>Report Type</label>
+                            <select id="type-select" class="form-select" aria-label="Default select example">
+                                <option selected value=" 1 ">Class</option>
+                                <option selected value=" 2 ">Students</option>
+                            </select>
+                        </div>
+                        <br>
+                        <div class="col-md-6">
+                            <label>Select Class</label>
+                            <select id="class-select" class="form-select" aria-label="Default select example">
+                                {% for class in class_created %}
+                                <option selected value="{{class.id}}">{{ class.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-info generate-button">Generate</button>
+                        </div>
+
+                        <div class="mt-3" id="report-section"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+ document.querySelector('.generate-button').addEventListener('click', function () {
+        const userId = '{{ request.user.id }}';
+        const classId = document.getElementById('class-select').value;
+        const type = document.getElementById('type-select').value;
+        fetch('/generate_report_staff/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                class_id: classId,
+                user_id: userId,
+                report_type:type
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                console.log("received pdf");
+                // Create a blob URL for the PDF content
+                const pdfUrl = URL.createObjectURL(blob);
+
+                // Display PDF content below the "Generate" button
+                const reportSection = document.getElementById('report-section');
+                reportSection.innerHTML = `
+        <embed src="${pdfUrl}" type="application/pdf" width="100%" height="500px" />
+    `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+</script>
+{% endblock %}

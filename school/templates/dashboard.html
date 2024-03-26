@@ -1,0 +1,123 @@
+{% extends 'base1.html' %}
+{% load static %}
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+{% block content %}
+<!-- partial -->
+<div class="main-panel">
+    <div class="container">
+        <br/>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="content-wrapper">
+        <div class="page-header">
+
+        </div>
+
+        <div class="row">
+            <p class="h3">Classes</p>
+            <div style="height:100%; width:100%;  justify-content:space-evenly; padding: 20px 0;">
+            </div>
+
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Enrolled Classes</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Unit Name</th>
+                                    <th> Unit Code</th>
+                                    <th> Lecturer</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                {% if enrolled_classes %}
+                                {% for class in enrolled_classes %}
+                                <tbody>
+                                <tr>
+                                    <td> {{class.enrolled_class.name}}</td>
+                                    <td> {{class.enrolled_class.code}}</td>
+                                    <td> {{class.enrolled_class.teacher.user.last_name}} {{class.enrolled_class.teacher.user.first_name}}</td>
+
+                                    <td><a href="{% url 'enroll_class' class.enrolled_class.id %}" class="btn btn-info btn-sm">Un
+                                        enroll class</a>
+                                    </td>
+                                </tr>
+
+                                </tbody>
+                                {% endfor %}
+                                {% else %}
+                                <h3>You have not Enrolled in any Class!</h3>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Classes</h4>
+                        {% if classes %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Unit Name</th>
+                                    <th> Unit Code</th>
+                                    <th> Lecturer</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                {% for class in classes %}
+                                <tbody>
+                                <tr>
+                                    <td> {{class.name}}</td>
+                                    <td> {{class.code}}</td>
+                                    <td> {{class.teacher.user.last_name}} {{class.teacher.user.first_name}}</td>
+
+                                    <td><a href="{% url 'enroll_class' class.id %}" class="btn btn-success btn-sm">enroll
+                                        class</a>
+                                    </td>
+                                </tr>
+
+                                </tbody>
+                                {% endfor %}
+                                {% else %}
+                                <h3>No classes are available at the moment!</h3>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <footer class="footer">
+            <div class="container-fluid d-flex justify-content-between">
+                <span class="text-muted d-block text-center text-sm-start d-sm-inline-block">Copyright © G4.com 2024</span>
+            </div>
+        </footer>
+    </div>
+
+</div>
+</div>
+
+
+{% endblock %}

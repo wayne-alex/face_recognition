@@ -1,0 +1,204 @@
+{% extends 'base1.html' %}
+{% load static %}
+
+<style xmlns="http://www.w3.org/1999/html">
+    .face-capture-container {
+      position: relative;
+      width: 100%;
+      height: auto;
+    }
+
+    #face-capture-video {
+      width: 100%;
+      height: auto;
+    }
+
+    #face-capture-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #face-capture-shutter {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    .modal-body {
+        padding: 20px;
+        height: 400px;
+    }
+
+    #cameraVideo {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+{% block content %}
+<div class="main-panel">
+    <div class="container">
+        <br/>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class="content-wrapper">
+        <div class="page-header">
+        </div>
+        <div class="row">
+            <p class="h3">User Account</p>
+            <div style="height:100%; width:100%;  justify-content:space-evenly; padding: 20px 0;">
+            </div>
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="nav-profile-image">
+                            <img src="{% static 'Login/assets/default-user.png' %}" alt="Prof"
+                                 style="height:30px;width:30px;">
+                        </div>
+                        <h4 class="card-title">User Profile</h4>
+                        <form>
+                            <div class="row g-3">
+                                <div class="col">
+                                    <label for="inputAddress" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" placeholder="First name"
+                                           aria-label="First name" readonly value="{{ account.user.first_name }}">
+                                </div>
+                                <div class="col">
+                                    <label for="inputAddress" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" placeholder="Last name"
+                                           aria-label="Last name" readonly value="{{ account.user.last_name }}">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="inputAddress" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="inputAddress" placeholder="1234 Main St"
+                                       readonly value="{{ account.user.username }}">
+                            </div>
+                            <div class="col-12">
+                                <label for="inputAddress2" class="form-label">Email Address</label>
+                                <input type="text" class="form-control" id="inputAddress2"
+                                       placeholder="Apartment, studio, or floor" readonly
+                                       value="{{ account.user.email }}">
+                            </div>
+                        </form>
+                    </div>
+                    <hr>
+                    <div class="card-body"><span class="material-symbols-outlined">ar_on_you</span>
+                        <h4 class="card-title">Face Recognition</h4>
+                        {% if account.face_image %}
+                        <img src="{{ account.face_image.url }}" alt="Face Image" style="max-width: 100%; height: auto;">
+                        {% else %}
+                        <span class="material-icons material-symbols-outlined"
+                              style="vertical-align: middle; color: red;">info</span>
+                        <p class="h4" style="display: inline-block; margin-right: 10px;">No face detected. You have not
+                            enrolled your face</p>
+                        <div>
+                            <!-- Form for direct upload -->
+                            <form id="directUploadForm" method="post" action="{% url 'upload_image' %}"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <!-- Input for file upload -->
+                                <input type="file" name="face_image" accept="image/*" required>
+
+                                <button type="button" id="previewBtn" class="btn btn-info btn-sm">
+                                    Preview Photo
+                                </button>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <span class="material-symbols-outlined">done</span> Upload Photo
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Preview Image</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Display the captured image here -->
+                <img id="imagePreview1" alt="Captured Image" style="max-width: 100%; height: auto;">
+
+                <!-- Form for submitting the image -->
+                <form id="imageForm" method="post" action="{% url 'upload_image' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" name="face_image" id="imageInput"
+                           style="position: absolute; left: -9999px; opacity: 0;">
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="previewModalCloseBtn" class="btn btn-danger btn-sm" data-dismiss="modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+
+                <button type="button" id="previewModalCloseBtn1" class="btn btn-success btn-sm">
+                    <span class="material-symbols-outlined">done</span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("previewBtn").addEventListener("click", function() {
+        const fileInput = document.querySelector('input[name="face_image"]');
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                previewImage(imageData);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function previewImage(imageData) {
+        const imagePreview = document.getElementById('imagePreview1');
+        imagePreview.src = imageData;
+
+        // Show the preview modal
+        $('#previewModal').modal('show');
+
+        // Attach click event to close button
+        $('#previewModalCloseBtn').on('click', function() {
+            $('#previewModal').modal('hide');
+        });
+          $('#previewModalCloseBtn1').on('click', function() {
+            $('#previewModal').modal('hide');
+        });
+    }
+</script>
+
+{% endblock %}
