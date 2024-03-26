@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set up virtual environment
-python3.9 -m venv venv
+python3.10 -m venv venv
 
 # Activate virtual environment
 source venv/bin/activate
@@ -13,6 +13,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Collect static files
-python3.9 manage.py collectstatic --noinput
+python3.10 manage.py collectstatic --noinput
 
 
