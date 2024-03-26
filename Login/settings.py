@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-b=2p)8!xoy2$=nu$sskm$fkc1%(ob2@l#_w0jpwb0dun3y*l1b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 FACE_RECOGNITION_URL = 'http://127.0.0.1:5000/verify'
 ALLOWED_HOSTS = ['.vercel.app', '.now.sh', 'localhost', '127.0.0.1']
 
