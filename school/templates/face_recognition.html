@@ -27,16 +27,16 @@
                     </div>
                     <div id="successLogo" class="text-center mt-3" style="display: none;">
                         <img src="{% static 'login/images/success.png' %}" alt="Success!"
-                             style="max-width: 60px; max-height: 60px;">
+                             style="max-width: 80px; max-height: 80px;">
                         <p>Face verified successfully!</p>
                     </div>
                     <div id="failureLogo" class="text-center mt-3" style="display: none;">
                         <img src="{% static 'login/images/failed.png' %}" alt="Failed!"
-                             style="max-width: 60px; max-height: 60px;">
+                             style="max-width: 80px; max-height: 80px;">
                         <p>Face verification Failed!. Face Mismatch!.</p>
                     </div>
                     <video id="webcam" width="100%" height="auto" autoplay playsinline
-                           style="max-width: 70%; max-height: 70%;"></video>
+                           style="max-width: 80px; max-height: 80px;"></video>
                 </div>
 
                 <!-- Shutter button to take the image -->
@@ -50,6 +50,21 @@
 </div>
 
 <script>
+
+    // Function declarations outside event listener
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function redirectToDashboard() {
+        window.location.href = '/dashboard/';
+    }
+
+    function redirectToHome() {
+        window.location.href = '/';
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         const webcamContainer = document.getElementById('webcam-container');
@@ -82,9 +97,8 @@
         }
 
         shutterBtn.addEventListener('click', function () {
-            // Disable the button to prevent multiple clicks
             document.getElementById('loader').style.display = 'block';
-            document.getElementById('webcam').style.display = 'none';
+            // Disable the button to prevent multiple clicks
             shutterBtn.disabled = true;
 
             // Get the video element and canvas
@@ -110,61 +124,38 @@
                 formData.append('username', storedUsername);
 
                 // Send FormData to the server
-                const startTime = performance.now(); // Record start time
+                const startTime = performance.now();
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/face_recognition/', true);
+                xhr.onload = function () {
+                    const endTime = performance.now(); // Record end time
+                    console.log('Request took ' + (endTime - startTime) + ' milliseconds');
+                    const videoBox = document.getElementById('webcam-container');
 
-                fetch('/face_recognition/', {
-                    method: 'POST',
-                    body: formData,
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        const endTime = performance.now(); // Record end time
-                        console.log('Request took ' + (endTime - startTime) + ' milliseconds');
+                    if (xhr.status === 200) {
+                        document.getElementById('loader').style.display = 'none';
+                        playBeep();
+                        document.getElementById('successLogo').style.display = 'block';
+                        setTimeout(redirectToDashboard, 1000);
+                    } else {
+                        document.getElementById('loader').style.display = 'none';
+                        playBeep();
+                        document.getElementById('failureLogo').style.display = 'block';
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+                    }
+                };
+                xhr.onerror = function () {
+                    alert('Error uploading image!');
+                };
+                xhr.send(formData);
 
-                        const videoBox = document.getElementById('webcam-container');
-
-                        if (data.message) {
-                            document.getElementById('loader').style.display = 'none';
-                            playBeep()
-                            document.getElementById('successLogo').style.display = 'block';
-                            setTimeout(redirectToDashboard, 1000);
-                        } else if (data.error) {
-                            document.getElementById('loader').style.display = 'none';
-                            playBeep()
-                            document.getElementById('failureLogo').style.display = 'block';
-                            setTimeout(function () {
-                                location.reload();
-                            }, 1000);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    })
-                    .finally(() => {
-                        // Enable the button and reset its appearance
-                        shutterBtn.disabled = false;
-                        shutterBtn.innerHTML = 'Take Picture';
-                    });
             }, 'image/png');
 
             function playBeep() {
                 const audio = new Audio('{% static "Login/beep.mp3" %}');
                 audio.play();
-            }
-
-            function createIconDiv(iconContent, iconColor, iconClass) {
-                const iconDiv = document.createElement('div');
-                iconDiv.style.display = 'flex';
-                iconDiv.style.justifyContent = 'center';
-                iconDiv.style.alignItems = 'center';
-                iconDiv.style.height = '100%';
-
-                const iconSpan = document.createElement('span');
-                iconSpan.className = iconClass + ' ' + iconColor;
-                iconSpan.innerHTML = iconContent;
-
-                iconDiv.appendChild(iconSpan);
-                return iconDiv;
             }
 
             // Stop the video feed
@@ -176,24 +167,9 @@
             // Set button text and show spinner
             shutterBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Please wait...';
         });
-
-
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-
-        function redirectToDashboard() {
-            window.location.href = '/dashboard/';
-        }
-
-        function redirectToHome() {
-
-            window.location.href = '/';
-        }
     });
 
 </script>
+
 
 {% endblock %}

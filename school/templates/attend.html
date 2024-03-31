@@ -35,17 +35,17 @@
 
                         <div id="webcam-container" class="mb-3" style="width: 100%;">
                             <div id="loader" class="text-center mt-3" style="display: none;">
-                                <img src="{% static 'login/images/loading.gif' %}" alt="Loading...">
+                                <img src="{% static 'login/images/loading.gif' %}" alt="Loading..." style="max-width: 80px; max-height: 80px;">
                                 <p>Please wait while the attendance is being taken...</p>
                             </div>
                             <div id="successLogo" class="text-center mt-3" style="display: none;">
-                                <img src="{% static 'login/images/success.png' %}" alt="Success!">
+                                <img src="{% static 'login/images/success.png' %}" alt="Success!" style="max-width: 80px; max-height: 80px;">
                                 <p>Attendance taken successfully!</p>
                             </div>
                             <div id="failureLogo" class="text-center mt-3" style="display: none;">
-                                <img src="{% static 'login/images/failed.png' %}" alt="Failed!">
+                                <img src="{% static 'login/images/failed.png' %}" alt="Failed!" style="max-width: 80px; max-height: 80px;">
                                 <p>Failed to take attendance. Please try again.</p>
-                            </div>
+                            </div >
                             <video id="webcam" width="100%" height="auto" autoplay playsinline></video>
                         </div>
 
@@ -96,80 +96,79 @@
         }
 
         shutterBtn.addEventListener('click', function () {
-            // Show loader
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('webcam').style.display = 'none';
+    // Show loader
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('webcam').style.display = 'none';
 
-            // Disable the button to prevent multiple clicks
-            shutterBtn.disabled = true;
+    // Disable the button to prevent multiple clicks
+    shutterBtn.disabled = true;
 
-            // Get the video element and canvas
-            const video = document.getElementById('webcam');
-            const canvas = document.createElement('canvas');
+    // Get the video element and canvas
+    const video = document.getElementById('webcam');
+    const canvas = document.createElement('canvas');
 
-            // Set the canvas dimensions to match the video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+    // Set the canvas dimensions to match the video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-            // Get the 2D context of the canvas
-            const context = canvas.getContext('2d');
+    // Get the 2D context of the canvas
+    const context = canvas.getContext('2d');
 
-            // Draw the current frame from the video onto the canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Draw the current frame from the video onto the canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert the canvas content to a Blob
-            canvas.toBlob(function (blob) {
-                // Create FormData object
-                const formData = new FormData();
-                formData.append('imageData', blob, 'image.png');
+    // Convert the canvas content to a Blob
+    canvas.toBlob(function (blob) {
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('imageData', blob, 'image.png');
 
-                // Get the geolocation data
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    formData.append('latitude', latitude);
-                    formData.append('longitude', longitude);
-                    const classId =  {{ classroom.id }};
+        // Get the geolocation data
+        navigator.geolocation.getCurrentPosition(function (position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            formData.append('latitude', latitude);
+            formData.append('longitude', longitude);
+            const classId =  {{ classroom.id }};
 
-                    // Send FormData to the server
-                    fetch(`/face_recognition_attendance/${classId}/`, {
-                        method: 'POST',
-                        body: formData,
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Hide loader
-                            document.getElementById('loader').style.display = 'none';
+            // Send FormData to the server using XMLHttpRequest
+            const startTime = performance.now();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', `/face_recognition_attendance/${classId}/`, true);
+            xhr.onload = function () {
+                const endTime = performance.now(); // Record end time
+                    console.log('Request took ' + (endTime - startTime) + ' milliseconds');
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
 
-                            if (data.hasOwnProperty('success') && data.success) {
-                                // Show success alert
-                                window.alert('You have successfully signed the Attendance.');
-                                // Redirect upon success
-                                window.location.href = "{% url 'sign_attendance' %}";
-                            } else {
-                                // Show failure alert
-                                window.alert('Error: ' + data.error);
-                                // Refresh the page upon failure
-                                location.reload();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            // Show error alert
-                            window.alert('An error occurred. Please try again later.');
-                            // Refresh the page upon error
+                if (xhr.status === 200) {
+                    // Redirect upon success
+                    window.location.href = "{% url 'sign_attendance' %}";
+                    console.log('Request took ' + (endTime - startTime) + ' milliseconds');
+                } else {
+                    // Show failure alert
+                    document.getElementById('loader').style.display = 'none';
+                        document.getElementById('failureLogo').style.display = 'block';
+                        setTimeout(function () {
                             location.reload();
-                        })
-                        .finally(() => {
-                            // Enable the button and reset its appearance
-                            shutterBtn.disabled = false;
-                            shutterBtn.innerHTML = 'Take Picture';
-                        });
-                }, function (error) {
-                    console.error('Error getting geolocation:', error);
-                });
-            }, 'image/png');
+                        }, 2000);
+
+                }
+            };
+            xhr.onerror = function () {
+               document.getElementById('loader').style.display = 'none';
+                        document.getElementById('failureLogo').style.display = 'block';
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+            };
+            xhr.send(formData);
+        }, function (error) {
+            console.error('Error getting geolocation:', error);
         });
+    }, 'image/png');
+});
+
     });
 </script>
 

@@ -14,12 +14,12 @@ SECRET_KEY = 'django-insecure-b=2p)8!xoy2$=nu$sskm$fkc1%(ob2@l#_w0jpwb0dun3y*l1b
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-FACE_RECOGNITION_URL = 'http://20.2.233.13:5000/verify'
+FACE_RECOGNITION_URL = 'http://127.0.0.1:5000/verify'
 ALLOWED_HOSTS = ['*']
 
 
-CSRF_TRUSTED_ORIGINS = ['https://679f-102-212-236-155.ngrok-free.app']
-CORS_ALLOWED_ORIGINS = ['https://679f-102-212-236-155.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://90a9-102-2-177-31.ngrok-free.app']
+CORS_ALLOWED_ORIGINS = ['https://90a9-102-2-177-31.ngrok-free.app']
 
 # Application definition
 
