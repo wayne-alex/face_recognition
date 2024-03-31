@@ -1,0 +1,130 @@
+{% extends 'admin_base.html'  %}
+{% load static %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="container">
+        <br/>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white me-2">
+                  <i class="mdi mdi-home"></i>
+                </span> Lecturers
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span></span>Overview <i
+                            class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% if account.admin == 0 %}
+        <div class="row">
+            <div class="col-md-12 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{% static 'Login/stylesheets/assets/images/dashboard/circle.svg' %}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">You are not allowed to view this page! <i
+                                class="mdi mdi-block-helper mdi-24px float-right"></i></h4>
+
+                        <h2 class="mb-5">RESTRICTED PAGE</h2>
+                        <h6 class="card-text">Only admins are allowed here!</h6>
+                    </div>
+                </div>
+            </div>
+            <footer class="footer">
+                <div class="container-fluid d-flex justify-content-between">
+                    <span class="text-muted d-block text-center text-sm-start d-sm-inline-block">Copyright © FaceRecognition By Murunga 2024</span>
+                </div>
+            </footer>
+        </div>
+
+        {% else %}
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h4 class="card-title">Lecturers</h4>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'add_lecturer' %}" class="btn btn-outline-info btn-sm float-end">Add
+                                Lecturer</a>
+                        </div>
+                    </div>
+
+                    {% if lecturers %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th> Name</th>
+                                <th> Staff-ID</th>
+                                <th> Admin</th>
+                                <th> Action</th>
+                            </tr>
+                            </thead>
+                            {% for lec in lecturers %}
+                            <tbody>
+                            <tr>
+                                {% if lec.face_image %}
+                                <td>
+                                    <img src="{{ lec.face_image.url}}" class="me-2" alt="lecturer Image">
+                                    {{lec.user.first_name}}
+                                    {{lec.user.last_name}}
+                                </td>
+                                {% else %}
+                                <td>
+                                    <img src="{% static 'Login/assets/default-user.png' %}" class="me-2"
+                                         alt="Default Image">
+                                    {{lec.user.first_name}}
+                                    {{lec.user.last_name}}
+                                </td>
+                                {% endif %}
+                                <td> {{lec.user.username}}</td>
+                                {% if lec.admin %}
+                                <td>
+                                    <label class="badge badge-gradient-success"><i class="mdi mdi-check"></i></label>
+                                </td>
+                                {% else %}
+                                <td>
+                                    <label class="badge badge-gradient-danger"><i
+                                            class="mdi mdi-minus-circle-outline"></i></label>
+                                </td>
+                                {% endif %}
+
+                                <td><a href="{% url 'view_lecturer' lec.id %}" class="btn btn-outline-info btn-sm"><i
+                                        class="mdi mdi-pencil"></i> <a href="{% url 'delete_lecturer' lec.id %}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i>
+                                </a>
+                                </td>
+                            </tr>
+
+                            </tbody>
+                            {% endfor %}
+                            {% else %}
+                            <h3>No Lecturers Found</h3>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

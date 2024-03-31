@@ -3,12 +3,12 @@ import io
 import json
 import math
 import random
+from datetime import timedelta
 
 import cv2
 import numpy as np
 import requests
 from PIL import Image
-# Create your views here...
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -16,11 +16,10 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers import serialize
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from reportlab.lib import colors
@@ -32,9 +31,9 @@ from reportlab.platypus import Image as Img
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 from .forms import SignUpForm
-from .models import Account, Signed
-from .models import Enrollment
-from .models import User, Class, ClassCount, Attendance
+from .models import Enrollment, Account
+from .models import Signed
+from .models import User, ClassCount, Attendance, Class
 
 
 def home(request):
@@ -267,6 +266,9 @@ def enroll_class(request, id):
 
 def take_attendance(request, class_id, latitude, longitude):
     classroom = get_object_or_404(Class, id=class_id)
+    classCount = get_object_or_404(ClassCount, id=class_id)
+    classCount.count = classCount.count + 1
+    classCount.save()
     classroom.ongoing = True
     classroom.latitude = latitude
     classroom.longitude = longitude
@@ -315,7 +317,7 @@ def accountSettings(request):
     account = teacher if teacher.staff else student
 
     template_name = 'account_settings_staff.html' if teacher.staff else 'account_settings.html'
-    context = {'account': account}
+    context = {'account': account, 'student': student, 'teacher': teacher}
     return render(request, template_name, context)
 
 
@@ -350,24 +352,35 @@ def uploadImage(request):
 
 
 def sign_Attendance(request):
+    student = Account.objects.get(user__id=request.user.id)
     user = request.user
     student_account = Account.objects.get(user=user)
     ongoing_classes = Class.objects.filter(ongoing=True, enrollment__student=student_account)
-    return render(request, 'sign_attendance.html', {'classrooms': ongoing_classes})
+    return render(request, 'sign_attendance.html', {'classrooms': ongoing_classes, 'student': student})
 
 
 @csrf_exempt
 def signed(request, classId):
     # Get today's date
     today = timezone.now().date()
-    # Filter Signed objects for the given class and today's date, ordered by time in descending order
+
+    # Retrieve signed attendance records for the given class and date, ordering by time
     student_signed = Signed.objects.filter(class_field_id=classId, time__date=today).order_by('-time')
 
-    # Serialize the queryset
-    serialized_data = serialize('json', student_signed)
+    # Create a list to store dictionaries containing required fields for each signed attendance
+    signed_attendance_data = []
 
-    # Return the serialized data in JSON format
-    return JsonResponse(serialized_data, safe=False)
+    # Iterate through signed attendance records and create dictionaries with required fields
+    for attendance in student_signed:
+        attendance_data = {
+            'student': attendance.student.user.get_full_name(),  # Assuming student name is retrieved from user model
+            'time': attendance.time.strftime('%Y-%m-%d %H:%M:%S'),  # Format time as string
+            'remarks': attendance.remarks
+        }
+        signed_attendance_data.append(attendance_data)
+
+    # Return the list of dictionaries in JSON format
+    return JsonResponse(signed_attendance_data, safe=False)
 
 
 @csrf_exempt
@@ -390,8 +403,10 @@ def faceRecognitionAttendance(request, classId):
 
             # Calculate the distance between the teacher's and student's locations
             distance = haversine(latitude, longitude, teacher_latitude, teacher_longitude)
+            print(latitude, longitude, teacher_latitude, teacher_longitude)
+            print(distance)
 
-            if distance <= 100:
+            if distance <= 5000:
                 try:
                     acc = Account.objects.get(user__username=username)
 
@@ -417,6 +432,16 @@ def faceRecognitionAttendance(request, classId):
                         verification_result = response.json().get('verified', False)
 
                         if verification_result:
+                            three_hours_ago = timezone.now() - timedelta(hours=3)
+                            recent_attendance = Attendance.objects.filter(student=request.user.account,
+                                                                          attended_class=classroom,
+                                                                          timestamp__gte=three_hours_ago)
+
+                            if recent_attendance.exists():
+                                messages.success(request, 'You have Already Submitted Attendance for this class!')
+                                response_data = {
+                                    'error': 'You have already Submitted Attendance!.'}
+                                return JsonResponse(response_data, status=400)
                             attend = Attendance(student=request.user.account, attended_class=classroom)
                             attend.save()
                             signed = Signed(class_field=classroom, student=request.user.account)
@@ -428,6 +453,7 @@ def faceRecognitionAttendance(request, classId):
                             messages.error(request, "Face verification failed! Try again")
                             return JsonResponse({'success': False})
                     else:
+                        print(response.content)
                         messages.error(request, "Error in face recognition API. Please try again later.")
                         return JsonResponse({'success': False})
 
@@ -443,7 +469,9 @@ def faceRecognitionAttendance(request, classId):
             messages.success(request, "Image or Location not sent. Try Again.")
             return JsonResponse({'error': 'Image or Location not sent'}, status=400)
     else:
-        return render(request, 'attend.html')
+        student = Account.objects.get(user__id=request.user.id)
+        classroom = Class.objects.get(id=classId)
+        return render(request, 'attend.html', {'classroom': classroom, 'student': student})
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -462,6 +490,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 def attendance_report(request):
+    student = Account.objects.get(user__id=request.user.id)
     enrolled_classes = Enrollment.objects.filter(student=request.user.account)
     total_classes = 0
     attended_classes = 0
@@ -479,6 +508,7 @@ def attendance_report(request):
         'total_classes': total_classes,
         'attended_classes': attended_classes,
         'percentage_attendance': percentage_attendance,
+        'student': student,
     })
 
 
@@ -492,6 +522,7 @@ def generate_report(request):
             user = User.objects.get(id=user_id)
             selected_class = get_object_or_404(Class, id=class_id)
             taught_class = ClassCount.objects.filter(attended_class=selected_class).count()
+            attendedClasses = Attendance.objects.filter(attended_class=selected_class, student=user.account)
             attended_class = Attendance.objects.filter(attended_class=selected_class, student=user.account).count()
             serial_number = ''.join([str(random.randint(0, 9)) for _ in range(8)])
 
@@ -554,6 +585,33 @@ def generate_report(request):
                 class_info.append(["Attendance Percentage", "N/A"])
 
             class_table = Table(class_info, colWidths=[1.5 * inch, 3 * inch])
+            class_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(class_table)
+            elements.append(Spacer(1, 0.25 * inch))
+
+            elements.append(Paragraph(f"Attendance History for {selected_class.name}", left_style))
+            elements.append(Spacer(1, 0.25 * inch))
+
+            # Add table header
+            table_data = [['S/n', 'Date', 'Time']]
+            for index, attendedClass in enumerate(attendedClasses):
+                Date = attendedClass.timestamp.date()
+                Time = attendedClass.timestamp.time()
+                table_data.append([index + 1, Date, Time])
+
+            # Create table
+            class_table = Table(table_data, colWidths=[0.5 * inch, 3 * inch,  3 * inch])
             class_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
@@ -809,7 +867,7 @@ def generate_report_staff(request):
                 # Loop through enrolled students and add to table
                 for index, enrolled_student in enumerate(enrolled_students):
                     student_name = f"{enrolled_student.student.user.first_name} {enrolled_student.student.user.last_name}"
-                    admission_number = 'J17-5576-2020'  # enrolled_student.student.admission_number
+                    admission_number = enrolled_student.student.user.username
 
                     # Count the number of times the student attended the class
                     no_attended = Attendance.objects.filter(student=enrolled_student.student,
@@ -860,3 +918,293 @@ def generate_report_staff(request):
                 return response
             except ObjectDoesNotExist:
                 return HttpResponseBadRequest("Invalid data provided")
+
+
+def admin(request):
+    # Count the number of teachers
+    teachers_count = Account.objects.filter(staff=True).count()
+    account = Account.objects.get(staff=True, user__username=request.user.username)
+
+    # Count the number of students
+    students_count = Account.objects.filter(staff=False).count()
+
+    # Get all classes
+    classes = Class.objects.all().count()
+
+    # Render the admin template with the data
+    return render(request, 'admin.html', {
+        'teachers_count': teachers_count,
+        'account': account,
+        'students_count': students_count,
+        'classes': classes
+    })
+
+
+def lecturers(request):
+    lecturers = Account.objects.filter(staff=True)
+    return render(request, 'admin_lecturers.html', {'lecturers': lecturers})
+
+
+def addLecturer(request):
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        staff_id = request.POST.get('staff_id')
+        is_admin = request.POST.get('admin_check') == 'on'  # Check if the admin checkbox is checked
+        face_image = request.FILES['image']
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('add_lecturer')
+
+        try:
+            user = User.objects.create_user(username=staff_id, password=password, first_name=first_name,
+                                            last_name=last_name)
+
+            lecturer = Account.objects.create(
+                user=user,
+                face_image=face_image,
+                staff=1,
+                face=1,
+                admin=is_admin
+            )
+
+            messages.success(request, 'Lecturer Created Successfuly')
+            return redirect('lecturers')
+
+        except Exception as e:
+            # Handle any exceptions that might occur during user creation
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('add_lecturer')
+
+    return render(request, 'admin_addLecturer.html')
+
+
+def viewLecturer(request, lec_id):
+    if request.method == 'POST':
+        # Retrieve form data
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        staff_id = request.POST.get('staff_id')
+        is_admin = request.POST.get('admin_check') == 'on'
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        try:
+            lec = Account.objects.get(id=lec_id)
+            user = lec.user  # Get the associated user object
+
+            user.username = staff_id
+            user.first_name = first_name
+            user.last_name = last_name
+            lec.admin = is_admin
+
+            # Only update password if both fields are provided and match
+            if password and confirm_password and password == confirm_password:
+                user.set_password(password)
+
+            if 'image' in request.FILES:
+                lec.face_image = request.FILES['image']
+
+            user.save()
+            lec.save()
+
+            messages.success(request, 'Lecturer Updated Successfully!')
+            return redirect('lecturers')
+
+        except Exception as e:
+            # Handle any exceptions that might occur during lecturer update
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('view_lecturer')
+
+    lec_id = lec_id
+    lecturer = Account.objects.get(id=lec_id)
+    return render(request, 'admin_viewLecturer.html', {'lecturer': lecturer})
+
+
+def students(request):
+    students = Account.objects.filter(staff=False)
+    return render(request, 'student.html', {'students': students})
+
+
+def addStudent(request):
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        staff_id = request.POST.get('staff_id')
+        face_image = request.FILES['image']
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('add_lecturer')
+
+        try:
+            user = User.objects.create_user(username=staff_id, password=password, first_name=first_name,
+                                            last_name=last_name)
+
+            lecturer = Account.objects.create(
+                user=user,
+                face_image=face_image,
+                face=1
+            )
+
+            messages.success(request, 'Student Created Successfuly')
+            return redirect('students')
+
+        except Exception as e:
+            # Handle any exceptions that might occur during user creation
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('add_student')
+
+    return render(request, 'add_student.html')
+
+
+def editStudent(request, lec_id):
+    if request.method == 'POST':
+        # Retrieve form data
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        staff_id = request.POST.get('staff_id')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        try:
+            lec = Account.objects.get(id=lec_id)
+            user = lec.user  # Get the associated user object
+
+            user.username = staff_id
+            user.first_name = first_name
+            user.last_name = last_name
+
+            # Only update password if both fields are provided and match
+            if password and confirm_password and password == confirm_password:
+                user.set_password(password)
+            if 'image' in request.FILES:
+                lec.face_image = request.FILES['image']
+
+            user.save()
+            lec.save()
+
+            messages.success(request, 'Student Updated Successfully!')
+            return redirect('students')
+
+        except Exception as e:
+            # Handle any exceptions that might occur during lecturer update
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('edit_student')
+
+    lec_id = lec_id
+    lecturer = Account.objects.get(id=lec_id)
+    return render(request, 'edit_student.html', {'student': lecturer})
+
+
+def classes_admin(request):
+    classes = Class.objects.all()
+    return render(request, 'classes.html', {'classes': classes})
+
+
+def addClass(request):
+    if request.method == 'POST':
+        class_name = request.POST.get('class_name')
+        class_code = request.POST.get('code')
+        lec_id = request.POST.get('lec_id')
+        teacher = Account.objects.get(id=lec_id)
+
+        try:
+            unit = Class.objects.create(name=class_name, code=class_code, teacher=teacher)
+            messages.success(request, 'Class Created Successfuly')
+            return redirect('classes')
+        except Exception as e:
+            # Handle any exceptions that might occur during user creation
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('add_class')
+    lecturers = Account.objects.filter(staff=True)
+    return render(request, 'add_class.html', {'lecturers': lecturers})
+
+
+def editClass(request, class_id):
+    if request.method == 'POST':
+        class_name = request.POST.get('class_name')
+        class_code = request.POST.get('code')
+        lec_id = request.POST.get('lec_id')
+        teacher = Account.objects.get(id=lec_id)
+        print(lec_id)
+
+        try:
+            unit = Class.objects.get(id=class_id)
+            unit.name = class_name
+            unit.code = class_code
+            unit.teacher = teacher
+            unit.save()
+            messages.success(request, 'Class Updated Successfuly')
+            return redirect('classes')
+        except Exception as e:
+            # Handle any exceptions that might occur during user creation
+            messages.error(request, f'An error occurred: {e}')
+            return redirect('classes')
+    lecturers = Account.objects.filter(staff=1)
+    classes = Class.objects.get(id=class_id)
+    return render(request, 'edit_class.html', {'lecturers': lecturers, 'class': classes})
+
+
+def delete_student(request, id):
+    deleted_student = Account.objects.get(id=id)
+    user = deleted_student.user
+    deleted_student.delete()
+    user.delete()
+    messages.success(request, 'You have successfully deleted Student ' + str(id))
+    return redirect('students')
+
+
+def delete_lecturer(request, id):
+    deleted_lecturer = Account.objects.get(id=id)
+    user = deleted_lecturer.user
+    deleted_lecturer.delete()
+    user.delete()
+    messages.success(request, 'You have successfully deleted Lecturer ' + str(id))
+    return redirect('lecturer')
+
+
+@csrf_exempt
+def manual_attendance_submit(request):
+    if request.method == 'POST':
+        registration_number = request.POST.get('registration_number')
+        classroom_id = request.POST.get('classroom_id')
+        try:
+            student = Account.objects.get(user__username=registration_number)
+            classroom = Class.objects.get(id=classroom_id)
+            three_hours_ago = timezone.now() - timedelta(hours=3)
+            recent_attendance = Attendance.objects.filter(student=student, attended_class=classroom,
+                                                          timestamp__gte=three_hours_ago)
+
+            if recent_attendance.exists():
+                response_data = {'error': 'Attendance already submitted for this class within the last 3 hours.'}
+                return JsonResponse(response_data, status=400)
+
+            # Create new attendance record and signed record
+            attend = Attendance.objects.create(student=student, attended_class=classroom)
+            sign = Signed.objects.create(student=student, class_field=classroom)
+
+            response_data = {'message': 'Attendance submitted successfully.',
+                             'registration_number': registration_number}
+            return JsonResponse(response_data)
+
+        except Account.DoesNotExist:
+            response_data = {'error': 'Student not found.'}
+            return JsonResponse(response_data, status=400)
+
+        except Class.DoesNotExist:
+            response_data = {'error': 'Class not found.'}
+            return JsonResponse(response_data, status=400)
+
+        except Exception as e:
+            response_data = {'error': str(e)}
+            return JsonResponse(response_data, status=400)
+
+    else:
+        response_data = {'error': 'Invalid request method.'}
+        return JsonResponse(response_data, status=400)

@@ -77,7 +77,8 @@
         if (storedUsername) {
             usernameElement.innerHTML = `Username: ${storedUsername} <a href="#">Not Me?</a>`;
         } else {
-            usernameElement.innerHTML = `Username: Not Available <a href="#">Not Me?</a>`;
+            shutterBtn.disabled = true;
+            usernameElement.innerHTML = `No user Available!Log in with password then try Again<a href="#">Not Me?</a>`;
         }
 
         shutterBtn.addEventListener('click', function () {

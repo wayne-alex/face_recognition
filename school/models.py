@@ -10,6 +10,7 @@ class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     staff = models.BooleanField(default=False)
     face = models.BooleanField(default=False)
+    admin = models.BooleanField(default=False)
     face_image = models.ImageField(upload_to='user_faces/', blank=True, null=True)
 
     def __str__(self):

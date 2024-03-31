@@ -14,8 +14,9 @@ SECRET_KEY = 'django-insecure-b=2p)8!xoy2$=nu$sskm$fkc1%(ob2@l#_w0jpwb0dun3y*l1b
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-FACE_RECOGNITION_URL = 'http://20.2.233.13:5001/verify'
+FACE_RECOGNITION_URL = 'http://20.2.233.13:5000/verify'
 ALLOWED_HOSTS = ['*']
+
 
 CSRF_TRUSTED_ORIGINS = ['https://679f-102-212-236-155.ngrok-free.app']
 CORS_ALLOWED_ORIGINS = ['https://679f-102-212-236-155.ngrok-free.app']
@@ -70,14 +71,21 @@ WSGI_APPLICATION = 'Login.wsgi.application'
 
 load_dotenv()
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DATABASE'),
+#         'USER': os.getenv('POSTGRES_USER'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+#         'HOST': os.getenv('POSTGRES_HOST'),
+#         'PORT': '5432',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DATABASE'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST'),
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -114,8 +122,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = os.path.join(BASE_DIR, 'static'),
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 
 # Default primary key field type

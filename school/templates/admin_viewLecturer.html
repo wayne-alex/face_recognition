@@ -1,0 +1,104 @@
+{% extends 'admin_base.html'  %}
+{% load static %}
+{% block content %}
+<div class="container">
+    <div class="col-md-12 stretch-card grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">View Lecturer</h2>
+                <form method="post" action="" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <img id="preview-image" src="{{ lecturer.face_image.url}}" alt="Preview Image"
+                                     style="height: 50px; width: 50px;"
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Image</label>
+                                <input type="file" class="form-control" id="image" accept="image/*" name="image"
+                                      >
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required
+                                       value="{{lecturer.user.first_name }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required
+                                       value="{{lecturer.user.last_name }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="staff_id" class="form-label">Staff ID No</label>
+                                <input type="text" class="form-control" id="staff_id" name="staff_id" required
+                                       value="{{lecturer.user.username }}">
+                            </div>
+                        </div>
+                        {% if lecturer.admin %}
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="admin_check" name="admin_check"
+                                       checked>
+                                <label class="form-check-label" for="admin_check">Admin</label>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="admin_check" name="admin_check"
+                                >
+                                <label class="form-check-label" for="admin_check">Admin</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Change Password</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       autocomplete="false">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirm_password"
+                                       name="confirm_password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-info">Edit Lecturer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('image').addEventListener('change', function (event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function (event) {
+            var previewImage = document.getElementById('preview-image');
+            previewImage.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+</script>
+{% endblock %}

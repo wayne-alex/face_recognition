@@ -1,47 +1,27 @@
 {% extends 'base2.html' %}
+{% load static %}
 {% block content %}
-
-<style>
-    .main-panel {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-
-    #countdown {
-        font-size: 3rem;
-    }
-
-    #info {
-        font-size: 1rem;
-    }
-
-    #no-of-students {
-        font-size: 1.5rem;
-    }
-</style>
+<style></style>
 
 <div class="main-panel">
     <div class="container">
         <br/>
-
         {% if messages %}
         {% for message in messages %}
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            {{ message }}
+            {{message}}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+
         {% endfor %}
         {% endif %}
     </div>
-
     <div class="content-wrapper">
         <div class="page-header">
             <h3 class="page-title">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
-                    <i class="mdi mdi-database-plus"></i>
-                </span> Take Attendance for Class: {{ classroom.name }}
+                  <i class="mdi mdi-account-edit"></i>
+                </span> Take Attendance
             </h3>
             <nav aria-label="breadcrumb">
                 <ul class="breadcrumb">
@@ -52,91 +32,167 @@
                 </ul>
             </nav>
         </div>
-
         <div class="col-12 grid-margin">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Attendance Details</h4>
-
-                    <p class="card-text">Unit Name: <b>{{ classroom.unit_name }}</b></p>
-                    <p class="card-text">Unit Code: <b>{{ classroom.unit_code }}</b></p>
-                    <p class="card-text">Lecturer:<b> {{ classroom.teacher.user.last_name}}</b> {{
-                        classroom.teacher.user.first_name}}</p>
-                    <a href="{% url 'end_class' classroom.id %}" id="end_class" class="btn btn-danger btn-sm">Stop
-                        Attendance</a>
-
-                    <!-- Countdown Timer -->
-                    <div class="card  border-primary mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Countdown</h5>
-                            <div id="countdown" class="text-center">05:00<span style="font-size: 1.5rem;">00</span>
-                            </div>
-                            <div id="info" class="text-center"><span
-                                    class="material-symbols-outlined">warning</span></span> When the timer runs out,
-                                no more
-                                attendance will be accepted.
+                    <div class="row">
+                        <div class="col">
+                            <h4 class="card-title">Attendance</h4>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'end_class' classroom.id %}" id="end_class"
+                               class="btn btn-outline-danger btn-sm float-sm-end">Stop Attendance</a>
+                            <button type="button" class="btn btn-outline-info btn-sm float-end" data-bs-toggle="modal"
+                                    data-bs-target="#staticBackdrop" style="margin-right: 10px;">
+                                Manual Attendance
+                            </button>
+                            <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static"
+                                 data-bs-keyboard="false" tabindex="-1"
+                                 aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Manual Attendance</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="manualAttendanceForm">
+                                                <p>Enter The Registration Number of the student</p>
+                                                <div class="mb-3">
+                                                    <label for="recipient-name" class="col-form-label">Student Reg
+                                                        No:</label>
+                                                    <input type="text" class="form-control" id="recipient-name">
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    data-bs-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="button" class="btn btn-info btn-sm"
+                                                    onclick="submitAttendance()">Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <p class="card-text">Student Attendance: <b>00</b>/{{ count }}</p>
-                        <table class="table" style="height: 300px;">
-                            <thead>
-                            <tr>
-                                <th>Student Name</th>
-                                <th> Time</th>
-                                <th>Remarks</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td></td>
-                                <td></td>
-                                <td></td>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="card-text">Unit Name: <b>{{ classroom.name }}</b></p>
+                                    <p class="h5">Lecturer: {{ classroom.teacher.user.first_name}} <b>
+                                        {{classroom.teacher.user.last_name}}</b></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="card-text">Unit Code: <b>{{ classroom.code }}</b></p>
+                                </div>
 
-                            </tr>
-                            </tbody>
-                        </table>
+                            </div>
+                            <h5 class="card-title">Countdown</h5>
+                            <div id="countdown" class="text-center" style="font-size: 3rem;">05:00<span
+                                    style="font-size: 1.5rem;">00</span></div>
+                            <div id="info" class="text-center"><span class="material-symbols-outlined">warning</span>
+                                When
+                                the timer runs out, no more attendance will be accepted.
+                            </div>
+
+
+                            <ul id="attendanceList"></ul>
+
+
+                        </div>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
+
+
 </div>
 
 <script>
+    function submitAttendance() {
+        var registrationNumber = document.getElementById('recipient-name').value;
+        if (registrationNumber.trim() === '') {
+            // Handle empty input
+            alert('Please enter the registration number.');
+            return;
+        }
 
-    function updateAttendanceTable() {
+        // Get the classroom ID from the template
+        var classroomId = {{classroom.id}};
+
+        // Prepare data to send
+        var data = {
+            classroom_id: classroomId,
+            registration_number: registrationNumber
+        };
+
+        // Send AJAX request to the server
         $.ajax({
-            url: '{% url "signed" classroom.id %}',
-            type: 'GET',
+            url: '{% url "manual_attendance_submit" %}',
+            type: 'POST',
+            data: data,
+            beforeSend: function (xhr) {
+                // You can add loading spinner or disable the button here
+            },
             success: function (response) {
-                // Clear the table body
-                $('#attendanceTable tbody').empty();
-
-                // Parse the JSON response
-                var data = JSON.parse(response);
-
-                // Iterate over the data and populate the table
-                data.forEach(function (item) {
-                    var row = '<tr>';
-                    row += '<td>' + item.fields.student + '</td>';
-                    row += '<td>' + item.fields.time + '</td>';
-                    row += '<td>' + item.fields.remarks + '</td>';
-                    row += '</tr>';
-                    $('#attendanceTable tbody').append(row);
-                });
+                // Handle success response from the server
+                alert('Attendance submitted successfully.');
+                $('#staticBackdrop').modal('hide'); // Hide the modal
+                // You can perform any other actions here, like updating UI
             },
             error: function (xhr, status, error) {
+                // Handle error response from the server
+                var errorMessage = xhr.responseJSON ? xhr.responseJSON.error : 'Error occurred while submitting attendance.';
+                alert(errorMessage);
+                registrationNumberInput.value = '';
                 console.error('Error:', error);
             }
         });
     }
 
-    // Call the updateAttendanceTable function every 2 seconds
-    setInterval(updateAttendanceTable, 2000);
+function updateAttendanceList() {
+  $.ajax({
+    url: '{% url "signed" classroom.id %}',
+    type: 'GET',
+    success: function (data) {
+      console.log(data);
+
+      // Clear the attendance list
+      $('#attendanceList').empty();
+
+      // Check if the response is an array
+      if (Array.isArray(data)) {
+        // Iterate over the response data and populate the list
+        data.forEach(function (item) {
+          var listItem = `<li>${item.student} - ${item.time} (${item.remarks})</li>`;
+          $('#attendanceList').append(listItem);
+        });
+      } else {
+        // If the response is not an array, handle it accordingly
+        var listItem = `<li>${data.student} - ${data.time} (${data.remarks})</li>`;
+        $('#attendanceList').append(listItem);
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error('Error:', error);
+    }
+  });
+}
+
+// Call the updateAttendanceList function initially
+updateAttendanceList();
+
+// Call the updateAttendanceList function every 2 seconds
+setInterval(updateAttendanceList, 2000);
+
 
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -185,5 +241,3 @@
 </script>
 
 {% endblock %}
-
-
